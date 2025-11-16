@@ -1,5 +1,5 @@
 import React, { createContext, useState, useEffect, useMemo, useCallback } from 'react';
-import { User, PaymentRequest } from '../types';
+import { User, PaymentRequest, UserTier } from '../types';
 
 interface AuthContextType {
   user: User | null;
@@ -38,7 +38,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   useEffect(() => {
     const storedUser = localStorage.getItem('imagerAiUser');
-    if (storedUser) setUser(JSON.parse(storedUser));
+    if (storedUser) {
+        const parsedUser = JSON.parse(storedUser);
+        if (!parsedUser.tier) { // Backward compatibility
+            parsedUser.tier = 'Free';
+        }
+        setUser(parsedUser);
+    }
     
     const storedUsers = localStorage.getItem('imagerAiUsers');
     if (storedUsers) setUsers(JSON.parse(storedUsers));
@@ -74,13 +80,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         email: email,
         credits: 99999,
         role: 'admin',
+        tier: 'Pro',
       };
       persistCurrentUser(adminUser);
       return;
     }
 
     if (users[email]) {
-      persistCurrentUser(users[email]);
+      const existingUser = users[email];
+      if (!existingUser.tier) existingUser.tier = 'Free';
+      persistCurrentUser(existingUser);
     } else {
         const newUser: User = {
             id: `user_${Date.now()}`,
@@ -88,6 +97,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             email: email,
             credits: 40,
             role: 'user',
+            tier: 'Free',
         };
         const updatedUsers = { ...users, [email]: newUser };
         persistAllUsers(updatedUsers);
@@ -102,6 +112,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       email,
       credits: 40,
       role: 'user',
+      tier: 'Free',
     };
     const updatedUsers = { ...users, [email]: newUser };
     persistAllUsers(updatedUsers);
@@ -159,6 +170,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       for (const email in users) {
         const currentUser = users[email];
         if (currentUser && currentUser.role !== 'admin') {
+          if (!currentUser.tier) currentUser.tier = 'Free'; // Backward compatibility
           userList.push(currentUser);
         }
       }
@@ -212,15 +224,33 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const userToCredit = users[payment.userEmail];
     if (userToCredit) {
         const creditsToAdd = Number(payment.plan.split(' ')[0]);
-        const updatedUser = { ...userToCredit, credits: userToCredit.credits + creditsToAdd };
+        
+        let newTier: UserTier = userToCredit.tier || 'Free';
+        const tierValues: Record<UserTier, number> = { 'Free': 0, 'Basic': 1, 'Pro': 2 };
+
+        if (payment.plan.includes('120 Credits') && tierValues[newTier] < 1) {
+            newTier = 'Basic';
+        } else if (payment.plan.includes('280 Credits') && tierValues[newTier] < 2) {
+            newTier = 'Pro';
+        }
+        
+        const updatedUser = { 
+            ...userToCredit, 
+            credits: userToCredit.credits + creditsToAdd,
+            tier: newTier
+        };
         const updatedUsers = { ...users, [payment.userEmail]: updatedUser };
         persistAllUsers(updatedUsers);
+
+        if (user && user.id === updatedUser.id) {
+            persistCurrentUser(updatedUser);
+        }
     }
 
     const updatedPayments = payments.map((p): PaymentRequest => p.id === paymentId ? { ...p, status: 'approved' } : p);
     persistPayments(updatedPayments);
 
-  }, [payments, users]);
+  }, [payments, users, user]);
 
   const rejectPaymentRequest = useCallback((paymentId: string) => {
       const updatedPayments = payments.map((p): PaymentRequest => p.id === paymentId ? { ...p, status: 'rejected' } : p);

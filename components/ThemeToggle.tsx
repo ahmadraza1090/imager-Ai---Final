@@ -1,6 +1,8 @@
+
 import React from 'react';
 import { useTheme } from '../hooks/useTheme';
-import { motion } from 'framer-motion';
+// FIX: Import Transition type from framer-motion to fix type inference issues.
+import { motion, Transition } from 'framer-motion';
 
 const SunIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -14,7 +16,8 @@ const MoonIcon = () => (
   </svg>
 );
 
-const spring = {
+// FIX: Add Transition type annotation to ensure correct type inference for animation properties.
+const spring: Transition = {
   type: "spring",
   stiffness: 700,
   damping: 30

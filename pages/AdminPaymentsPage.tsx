@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Page, PaymentRequest } from '../types';
+import { Page, PaymentRequest, User } from '../types';
 import { useAuth } from '../hooks/useAuth';
 import { motion } from 'framer-motion';
 import AdminNav from '../components/AdminNav';
@@ -17,8 +17,9 @@ const StatusBadge: React.FC<{ status: PaymentRequest['status'] }> = ({ status })
 };
 
 const AdminPaymentsPage: React.FC<{ navigate: (page: Page) => void }> = ({ navigate }) => {
-    const { getAllPaymentRequests, approvePaymentRequest, rejectPaymentRequest } = useAuth();
+    const { getAllPaymentRequests, approvePaymentRequest, rejectPaymentRequest, getAllUsers } = useAuth();
     const [payments, setPayments] = useState(getAllPaymentRequests());
+    const [users] = useState<Record<string, User>>(getAllUsers().reduce((acc, user) => ({...acc, [user.id]: user}), {}));
     const [filter, setFilter] = useState<StatusFilter>('pending');
 
     const refreshPayments = () => setPayments(getAllPaymentRequests());
@@ -49,7 +50,7 @@ const AdminPaymentsPage: React.FC<{ navigate: (page: Page) => void }> = ({ navig
                         <motion.button 
                             key={f} 
                             onClick={() => setFilter(f)} 
-                            className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${filter === f ? 'bg-blue-600 text-white shadow-md' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200'}`}
+                            className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${filter === f ? 'bg-primary-600 text-white shadow-md' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200'}`}
                             whileHover={{ y: -2 }}
                             whileTap={{ scale: 0.95 }}
                         >
@@ -82,7 +83,11 @@ const AdminPaymentsPage: React.FC<{ navigate: (page: Page) => void }> = ({ navig
                                         key={p.id}
                                         className="hover:bg-gray-100/50 dark:hover:bg-gray-700/50 transition-colors"
                                     >
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">{p.userName} <span className="text-gray-500 dark:text-gray-400">({p.userEmail})</span></td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
+                                            <div>{p.userName}</div>
+                                            <div className="text-xs text-gray-500 dark:text-gray-400">{p.userEmail}</div>
+                                            <div className="text-xs text-primary-600 dark:text-primary-400 font-semibold">{users[p.userId]?.tier} Tier</div>
+                                        </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{p.plan}</td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 font-mono">{p.transactionId}</td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{new Date(p.date).toLocaleDateString()}</td>

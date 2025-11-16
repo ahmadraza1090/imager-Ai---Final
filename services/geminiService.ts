@@ -1,3 +1,4 @@
+
 import { Resolution } from "../types";
 import { GoogleGenAI } from "@google/genai";
 
@@ -32,12 +33,19 @@ export const generateImages = async (
         },
     });
     
-    if (!response.generatedImages || response.generatedImages.length === 0) {
-        throw new Error("Image generation failed to produce results.");
+    // The 'any' cast is used here as the exact response type for generateImages isn't fully detailed in the provided documentation,
+    // especially for failure cases like safety blocks. This allows for robust checking.
+    const responseAsAny = response as any;
+
+    if (!responseAsAny.generatedImages || responseAsAny.generatedImages.length === 0) {
+        if (responseAsAny.promptFeedback && responseAsAny.promptFeedback.blockReason) {
+             throw new Error(`Image generation blocked: ${responseAsAny.promptFeedback.blockReason}. Please modify your prompt.`);
+        }
+        throw new Error("Image generation failed. This can happen if the prompt violates safety policies. Please try rewriting your prompt.");
     }
 
-    return response.generatedImages.map(
-      (img) => `data:image/png;base64,${img.image.imageBytes}`
+    return responseAsAny.generatedImages.map(
+      (img: any) => `data:image/png;base64,${img.image.imageBytes}`
     );
 
   } catch (error: any) {

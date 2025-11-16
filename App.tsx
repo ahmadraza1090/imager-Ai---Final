@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback } from 'react';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
@@ -16,7 +17,8 @@ import AdminPaymentsPage from './pages/AdminPaymentsPage';
 import AdminSettingsPage from './pages/AdminSettingsPage';
 import { Page } from './types';
 import { useAuth } from './hooks/useAuth';
-import { motion, AnimatePresence } from 'framer-motion';
+// FIX: Import Transition type from framer-motion to fix type inference issues.
+import { motion, AnimatePresence, Transition } from 'framer-motion';
 
 const pageVariants = {
   initial: { opacity: 0, y: 20 },
@@ -24,7 +26,8 @@ const pageVariants = {
   out: { opacity: 0, y: -20 },
 };
 
-const pageTransition = {
+// FIX: Add Transition type annotation to ensure correct type inference for animation properties.
+const pageTransition: Transition = {
   type: 'tween',
   ease: 'anticipate',
   duration: 0.5,
@@ -64,7 +67,7 @@ const AppContent: React.FC = () => {
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200 transition-colors duration-500 overflow-x-hidden">
-      <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-blue-50 via-white to-gray-50 dark:from-gray-900 dark:via-gray-800 dark:to-black -z-10"></div>
+      <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-primary-50 via-white to-secondary-50 dark:from-gray-900 dark:via-black dark:to-black -z-10"></div>
       <Navbar navigate={navigate} currentPage={currentPage} />
       <main className="flex-grow">
         <AnimatePresence mode="wait">

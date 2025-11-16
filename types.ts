@@ -1,11 +1,14 @@
 export type Page = 'landing' | 'generator' | 'credits' | 'contact' | 'login' | 'signup' | 'purchase' | 'history' | 'admin-users' | 'admin-payments' | 'admin-settings';
 
+export type UserTier = 'Free' | 'Basic' | 'Pro';
+
 export interface User {
   id: string;
   name: string;
   email: string;
   credits: number;
   role?: 'admin' | 'user';
+  tier: UserTier;
 }
 
 export type Theme = 'light' | 'dark';

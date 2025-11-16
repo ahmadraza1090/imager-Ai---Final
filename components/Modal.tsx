@@ -1,5 +1,7 @@
+
 import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+// FIX: Import Variants type from framer-motion to fix type inference issues.
+import { motion, AnimatePresence, Variants } from 'framer-motion';
 
 interface ModalProps {
   isOpen: boolean;
@@ -13,7 +15,8 @@ const backdropVariants = {
   hidden: { opacity: 0 },
 };
 
-const modalVariants = {
+// FIX: Add Variants type annotation to ensure correct type inference for animation properties.
+const modalVariants: Variants = {
   hidden: { y: "-50px", opacity: 0 },
   visible: { y: "0", opacity: 1, transition: { type: 'spring', stiffness: 300, damping: 30 } },
   exit: { y: "50px", opacity: 0 },
